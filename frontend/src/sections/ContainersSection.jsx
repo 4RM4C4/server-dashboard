@@ -15,10 +15,10 @@ export default function ContainersSection({ containers }) {
           <thead>
             <tr>
               <th>name</th>
+              <th>project</th>
               <th>status</th>
               <th>cpu</th>
               <th>memory</th>
-              <th>image</th>
             </tr>
           </thead>
           <tbody>
@@ -31,28 +31,31 @@ export default function ContainersSection({ containers }) {
             ) : (
               containers.map((c) => {
                 const memPct = c.memLimit > 0 ? (c.memUsed / c.memLimit) * 100 : 0;
+                const running = c.status === 'running';
                 return (
                   <tr key={c.id}>
                     <td style={{ fontWeight: 500 }}>
                       <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem', marginRight: '0.4rem' }}>{c.id}</span>
-                      {c.name}
+                      {c.service ?? c.name}
                     </td>
-                    <td><StatusBadge healthy={c.status === 'running'} size="sm" /></td>
+                    <td style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
+                      {c.project ?? '—'}
+                    </td>
+                    <td><StatusBadge healthy={running} size="sm" /></td>
                     <td style={{ color: c.cpu > 50 ? 'var(--yellow)' : 'var(--text-muted)' }}>
-                      {c.status === 'running' ? formatPercent(c.cpu) : '—'}
+                      {running ? formatPercent(c.cpu) : '—'}
                     </td>
                     <td>
-                      {c.status === 'running' && c.memLimit > 0 ? (
+                      {running && c.memUsed > 0 ? (
                         <span>
                           <span style={{ color: memPct > 80 ? 'var(--red)' : 'var(--text)' }}>
                             {formatBytes(c.memUsed)}
                           </span>
-                          <span style={{ color: 'var(--text-dim)' }}> / {formatBytes(c.memLimit)}</span>
+                          {c.memLimit > 0 && (
+                            <span style={{ color: 'var(--text-dim)' }}> / {formatBytes(c.memLimit)}</span>
+                          )}
                         </span>
                       ) : '—'}
-                    </td>
-                    <td style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
-                      {c.image.split(':')[0].split('/').pop()}
                     </td>
                   </tr>
                 );

@@ -22,11 +22,12 @@ function getContainerStats(container) {
       if (err || !data) return resolve(null);
       try {
         const s = typeof data === 'string' ? JSON.parse(data) : data;
-        resolve({
-          cpu: calcCpuPercent(s),
-          memUsed: s.memory_stats.usage - (s.memory_stats.stats?.cache ?? 0),
-          memLimit: s.memory_stats.limit,
-        });
+        const memStats = s.memory_stats ?? {};
+        // cgroupsv2 uses inactive_file instead of cache
+        const cache = memStats.stats?.inactive_file ?? memStats.stats?.cache ?? 0;
+        const memUsed = Math.max(0, (memStats.usage ?? 0) - cache);
+        const memLimit = memStats.limit ?? 0;
+        resolve({ cpu: calcCpuPercent(s), memUsed, memLimit });
       } catch {
         resolve(null);
       }
@@ -41,6 +42,7 @@ export async function getContainers() {
       list.map(async (info) => {
         const container = docker.getContainer(info.Id);
         const stats = info.State === 'running' ? await getContainerStats(container) : null;
+        const labels = info.Labels ?? {};
         return {
           id: info.Id.slice(0, 12),
           name: info.Names[0]?.replace('/', '') ?? info.Id.slice(0, 12),
@@ -51,6 +53,8 @@ export async function getContainers() {
           cpu: stats?.cpu ?? 0,
           memUsed: stats?.memUsed ?? 0,
           memLimit: stats?.memLimit ?? 0,
+          project: labels['com.docker.compose.project'] ?? labels['coolify.name'] ?? null,
+          service: labels['com.docker.compose.service'] ?? null,
         };
       })
     );
