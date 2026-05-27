@@ -16,6 +16,7 @@ export default function ContainersSection({ containers }) {
             <tr>
               <th>name</th>
               <th>project</th>
+              <th>url</th>
               <th>status</th>
               <th>cpu</th>
               <th>memory</th>
@@ -24,7 +25,7 @@ export default function ContainersSection({ containers }) {
           <tbody>
             {containers.length === 0 ? (
               <tr>
-                <td colSpan={5} style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '1.25rem' }}>
+                <td colSpan={6} style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '1.25rem' }}>
                   loading...
                 </td>
               </tr>
@@ -40,6 +41,27 @@ export default function ContainersSection({ containers }) {
                     </td>
                     <td style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
                       {c.project ?? '—'}
+                    </td>
+                    <td>
+                      {c.urls?.length ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
+                          {c.urls.map((url) => (
+                            <a
+                              key={url}
+                              href={`https://${url}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.75rem' }}
+                              onMouseEnter={(e) => e.target.style.color = 'var(--accent)'}
+                              onMouseLeave={(e) => e.target.style.color = 'var(--text-muted)'}
+                            >
+                              {url}
+                            </a>
+                          ))}
+                        </div>
+                      ) : (
+                        <span style={{ color: 'var(--text-dim)', fontSize: '0.75rem' }}>—</span>
+                      )}
                     </td>
                     <td><StatusBadge healthy={running} size="sm" /></td>
                     <td style={{ color: c.cpu > 50 ? 'var(--yellow)' : 'var(--text-muted)' }}>

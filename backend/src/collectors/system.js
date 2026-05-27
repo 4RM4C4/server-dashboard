@@ -5,8 +5,9 @@ import { existsSync } from 'fs';
 
 const IS_WINDOWS = process.platform === 'win32';
 const HAS_HOSTFS = existsSync('/hostfs');
-// Host /proc/net mounted at /hostproc/net via Docker volume
 const HAS_HOSTPROC_NET = existsSync('/hostproc/net');
+
+console.log(`[system] network source: ${HAS_HOSTPROC_NET ? '/hostproc/net (host)' : 'systeminformation (container fallback)'}`);
 
 // Parsed state for rate calculation
 let _prevNet = null;
