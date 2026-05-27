@@ -99,13 +99,17 @@ router.get('/traffic', async (req, res) => {
         AND b.id = (SELECT MAX(s.id) FROM traefik_traffic s WHERE s.entrypoint = a.entrypoint AND s.id < a.id)
       WHERE a.id IN (SELECT MAX(id) FROM traefik_traffic GROUP BY entrypoint)
     `);
-    res.json(rows.map((r) => ({
-      entrypoint: r.entrypoint,
-      rpm: r.seconds > 0 ? Math.round((r.req_delta / r.seconds) * 60) : 0,
-      rxBytesPerSec: r.seconds > 0 ? Math.round(r.rx_bytes / r.seconds) : 0,
-      txBytesPerSec: r.seconds > 0 ? Math.round(r.tx_bytes / r.seconds) : 0,
-    })));
+    res.json(rows.map((r) => {
+      const sec = Number(r.seconds);
+      return {
+        entrypoint: r.entrypoint,
+        rpm: sec > 0 ? Math.round((Number(r.req_delta) / sec) * 60) : 0,
+        rxBytesPerSec: sec > 0 ? Math.round(Number(r.rx_bytes) / sec) : 0,
+        txBytesPerSec: sec > 0 ? Math.round(Number(r.tx_bytes) / sec) : 0,
+      };
+    }));
   } catch (err) {
+    console.error('[traffic] query error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -128,13 +132,16 @@ router.get('/traffic/history', async (req, res) => {
       WHERE a.recorded_at > DATE_SUB(NOW(), INTERVAL ? HOUR)
       ORDER BY a.recorded_at ASC
     `, [hours]);
-    res.json(rows.map((r) => ({
-      recorded_at: r.recorded_at,
-      entrypoint: r.entrypoint,
-      rpm: r.seconds > 0 ? Math.round((r.req_delta / r.seconds) * 60) : 0,
-      rxBytesPerSec: r.seconds > 0 ? Math.round(r.rx_bytes / r.seconds) : 0,
-      txBytesPerSec: r.seconds > 0 ? Math.round(r.tx_bytes / r.seconds) : 0,
-    })));
+    res.json(rows.map((r) => {
+      const sec = Number(r.seconds);
+      return {
+        recorded_at: r.recorded_at,
+        entrypoint: r.entrypoint,
+        rpm: sec > 0 ? Math.round((Number(r.req_delta) / sec) * 60) : 0,
+        rxBytesPerSec: sec > 0 ? Math.round(Number(r.rx_bytes) / sec) : 0,
+        txBytesPerSec: sec > 0 ? Math.round(Number(r.tx_bytes) / sec) : 0,
+      };
+    }));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
