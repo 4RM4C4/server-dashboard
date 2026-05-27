@@ -67,7 +67,7 @@ export default function TrafficSection({ token }) {
         />
       </div>
 
-      <div className={sortedServices.length > 0 ? 'grid-2' : ''} style={sortedServices.length > 0 ? { gridTemplateColumns: '2fr 1fr' } : {}}>
+      <div className={sortedServices.length > 0 ? 'traffic-grid' : ''}>
         {history.length > 1 && (
           <div className="card">
             <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>

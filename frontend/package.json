@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "mock": "vite --mode mock",
     "build": "vite build",
     "preview": "vite preview"
   },
@@ -14,6 +15,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.2.1",
-    "vite": "^5.2.13"
+    "vite": "^5.2.13",
+    "ws": "^8.21.0"
   }
 }

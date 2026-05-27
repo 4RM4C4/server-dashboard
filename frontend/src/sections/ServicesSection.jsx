@@ -7,7 +7,7 @@ export default function ServicesSection({ health, ssl }) {
   return (
     <section className="section fade-in">
       <div className="section-title">services</div>
-      <div className="card" style={{ padding: 0 }}>
+      <div className="card" style={{ padding: 0, overflowX: 'auto' }}>
         <table className="dash-table">
           <thead>
             <tr>

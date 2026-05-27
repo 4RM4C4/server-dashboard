@@ -96,3 +96,10 @@
 .btn-header.accent:hover {
   background: var(--accent-dim);
 }
+
+@media (max-width: 600px) {
+  .header { padding: 0 1rem; }
+  .header-right { gap: 0.75rem; }
+  .header-meta { display: none; }
+  .header-sub { display: none; }
+}
