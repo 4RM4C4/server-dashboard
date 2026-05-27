@@ -6,6 +6,8 @@ import { getServiceRequestMetrics, getEntrypointTrafficMetrics } from '../collec
 import pool from '../db/connection.js';
 import config from '../config.js';
 
+const num = (v) => (Number.isFinite(v) ? v : null);
+
 async function collectAll() {
   const [system, containers, health, traefikServices, traefikTraffic] = await Promise.allSettled([
     getSystemMetrics(),
@@ -24,15 +26,15 @@ async function collectAll() {
             net_rx_bytes, net_tx_bytes, load_avg_1)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          s.cpu.percent,
-          s.temperature,
-          s.memory.used,
-          s.memory.total,
-          s.disk.used,
-          s.disk.total,
-          s.network.rxTotal,
-          s.network.txTotal,
-          s.loadAvg['1m'],
+          num(s.cpu.percent),
+          num(s.temperature),
+          num(s.memory.used),
+          num(s.memory.total),
+          num(s.disk.used),
+          num(s.disk.total),
+          num(s.network.rxTotal),
+          num(s.network.txTotal),
+          num(s.loadAvg['1m']),
         ]
       );
     }
@@ -43,7 +45,7 @@ async function collectAll() {
           `INSERT INTO container_metrics
              (container_id, container_name, cpu_percent, mem_used, mem_limit, status)
            VALUES (?, ?, ?, ?, ?, ?)`,
-          [c.id, c.name, c.cpu, c.memUsed, c.memLimit, c.status]
+          [c.id, c.name, num(c.cpu), num(c.memUsed), num(c.memLimit), c.status]
         );
       }
     }
