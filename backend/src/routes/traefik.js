@@ -17,27 +17,38 @@ router.get('/services', requireAuth, async (req, res) => {
   res.json((await getTraefikServices()) ?? []);
 });
 
-// Current RPM per service (delta between last two snapshots)
+// Current RPM per service — enriched with domain from Traefik router rules
 router.get('/requests', async (req, res) => {
   try {
-    const [rows] = await pool.query(`
-      SELECT
-        a.service,
-        GREATEST(0, a.requests_total - COALESCE(b.requests_total, 0)) AS delta,
-        TIMESTAMPDIFF(SECOND, COALESCE(b.recorded_at, a.recorded_at), a.recorded_at) AS seconds
-      FROM traefik_snapshots a
-      LEFT JOIN traefik_snapshots b
-        ON b.service = a.service
-        AND b.id = (
-          SELECT MAX(s.id) FROM traefik_snapshots s
-          WHERE s.service = a.service AND s.id < a.id
-        )
-      WHERE a.id IN (SELECT MAX(id) FROM traefik_snapshots GROUP BY service)
-      ORDER BY delta DESC
-    `);
+    const [rows, routers] = await Promise.all([
+      pool.query(`
+        SELECT
+          a.service,
+          GREATEST(0, a.requests_total - COALESCE(b.requests_total, 0)) AS delta,
+          TIMESTAMPDIFF(SECOND, COALESCE(b.recorded_at, a.recorded_at), a.recorded_at) AS seconds
+        FROM traefik_snapshots a
+        LEFT JOIN traefik_snapshots b
+          ON b.service = a.service
+          AND b.id = (
+            SELECT MAX(s.id) FROM traefik_snapshots s
+            WHERE s.service = a.service AND s.id < a.id
+          )
+        WHERE a.id IN (SELECT MAX(id) FROM traefik_snapshots GROUP BY service)
+        ORDER BY delta DESC
+      `).then(([r]) => r),
+      getTraefikRouters().catch(() => []),
+    ]);
+
+    const domainMap = {};
+    for (const r of routers ?? []) {
+      const match = r.rule?.match(/Host\(`([^`]+)`\)/);
+      if (match && r.service) domainMap[r.service] = match[1];
+    }
+
     res.json(
       rows.map((r) => ({
         service: r.service,
+        domain: domainMap[r.service] ?? null,
         rpm: r.seconds > 0 ? Math.round((r.delta / r.seconds) * 60) : 0,
       }))
     );

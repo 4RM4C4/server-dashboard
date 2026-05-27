@@ -59,7 +59,7 @@ export default function SystemSection({ system, token }) {
             : system?.temperature > 60 ? 'var(--yellow)'
             : 'var(--blue)'
           }
-          sub={system?.network?.iface ?? ''}
+          sub={null}
         />
         <div className="metric-card">
           <div className="metric-label">Network</div>

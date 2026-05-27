@@ -84,7 +84,7 @@ export default function TrafficSection({ token }) {
                   <div key={s.service}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.2rem', fontSize: '0.78rem' }}>
                       <span style={{ color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '70%' }}>
-                        {cleanServiceName(s.service)}
+                        {s.domain ?? cleanServiceName(s.service)}
                       </span>
                       <span style={{ color: 'var(--purple)', flexShrink: 0 }}>
                         {s.rpm > 0 ? `${s.rpm} rpm` : <span style={{ color: 'var(--text-dim)' }}>—</span>}
