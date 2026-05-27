@@ -22,5 +22,6 @@ services:
     volumes:
       - /:/hostfs:ro
       - /sys:/sys:ro
+      - /proc/net:/hostproc/net:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
     restart: unless-stopped

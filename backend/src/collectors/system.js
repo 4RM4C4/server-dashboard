@@ -1,12 +1,76 @@
 import si from 'systeminformation';
 import os from 'os';
-import { statfs } from 'fs/promises';
+import { statfs, readFile } from 'fs/promises';
 import { existsSync } from 'fs';
 
 const IS_WINDOWS = process.platform === 'win32';
-// /hostfs mounted → running in Docker with host filesystem access
-// /.dockerenv present but no /hostfs → running in Docker without host mount (dev)
 const HAS_HOSTFS = existsSync('/hostfs');
+// Host /proc/net mounted at /hostproc/net via Docker volume
+const HAS_HOSTPROC_NET = existsSync('/hostproc/net');
+
+// Parsed state for rate calculation
+let _prevNet = null;
+let _prevNetTime = null;
+
+async function getHostNetStats() {
+  const raw = await readFile('/hostproc/net/dev', 'utf8');
+  const lines = raw.trim().split('\n').slice(2); // skip header rows
+  const ifaces = lines.map((line) => {
+    const parts = line.trim().split(/\s+/);
+    return {
+      iface: parts[0].replace(':', ''),
+      rx_bytes: parseInt(parts[1], 10),
+      tx_bytes: parseInt(parts[9], 10),
+    };
+  });
+  return ifaces.filter(
+    (n) =>
+      !['lo', 'docker0'].includes(n.iface) &&
+      !n.iface.startsWith('br-') &&
+      !n.iface.startsWith('veth')
+  );
+}
+
+async function getNetworkMetrics() {
+  if (!IS_WINDOWS && HAS_HOSTPROC_NET) {
+    try {
+      const ifaces = await getHostNetStats();
+      const main = ifaces[0];
+      if (!main) return null;
+
+      const now = Date.now();
+      const prev = _prevNet?.find((n) => n.iface === main.iface);
+      const dt = _prevNetTime ? (now - _prevNetTime) / 1000 : null;
+
+      _prevNet = ifaces;
+      _prevNetTime = now;
+
+      if (!prev || !dt || dt <= 0) return { rxSec: 0, txSec: 0, rxTotal: main.rx_bytes, txTotal: main.tx_bytes, iface: main.iface };
+
+      return {
+        rxSec: Math.max(0, (main.rx_bytes - prev.rx_bytes) / dt),
+        txSec: Math.max(0, (main.tx_bytes - prev.tx_bytes) / dt),
+        rxTotal: main.rx_bytes,
+        txTotal: main.tx_bytes,
+        iface: main.iface,
+      };
+    } catch {
+      // fall through to si
+    }
+  }
+
+  // Fallback: systeminformation (works on Windows / dev without host mount)
+  const netStats = await si.networkStats();
+  const mainNet = netStats.find(
+    (n) =>
+      !['lo', 'docker0'].includes(n.iface) &&
+      !n.iface.startsWith('br-') &&
+      !n.iface.startsWith('veth')
+  );
+  return mainNet
+    ? { rxSec: mainNet.rx_sec ?? 0, txSec: mainNet.tx_sec ?? 0, rxTotal: mainNet.rx_bytes ?? 0, txTotal: mainNet.tx_bytes ?? 0, iface: mainNet.iface }
+    : null;
+}
 
 async function getDisk() {
   // Windows or dev without host mount: use si.fsSize() (reads native OS)
@@ -36,27 +100,20 @@ async function getDisk() {
 }
 
 export async function getSystemMetrics() {
-  const [load, mem, temp, netStats, disk] = await Promise.allSettled([
+  const [load, mem, temp, net, disk] = await Promise.allSettled([
     si.currentLoad(),
     si.mem(),
     si.cpuTemperature(),
-    si.networkStats(),
+    getNetworkMetrics(),
     getDisk(),
   ]);
 
   const cpu = load.status === 'fulfilled' ? load.value : null;
   const memory = mem.status === 'fulfilled' ? mem.value : null;
   const temperature = temp.status === 'fulfilled' ? temp.value : null;
-  const net = netStats.status === 'fulfilled' ? netStats.value : [];
+  const netData = net.status === 'fulfilled' ? net.value : null;
   const diskData = disk.status === 'fulfilled' ? disk.value : null;
   const loadAvg = os.loadavg();
-
-  const mainNet = net.find(
-    (n) =>
-      !['lo', 'docker0'].includes(n.iface) &&
-      !n.iface.startsWith('br-') &&
-      !n.iface.startsWith('veth')
-  );
 
   return {
     uptime: os.uptime(),
@@ -78,11 +135,11 @@ export async function getSystemMetrics() {
         : [],
     },
     network: {
-      rxSec: mainNet?.rx_sec ?? 0,
-      txSec: mainNet?.tx_sec ?? 0,
-      rxTotal: mainNet?.rx_bytes ?? 0,
-      txTotal: mainNet?.tx_bytes ?? 0,
-      iface: mainNet?.iface ?? 'unknown',
+      rxSec: netData?.rxSec ?? 0,
+      txSec: netData?.txSec ?? 0,
+      rxTotal: netData?.rxTotal ?? 0,
+      txTotal: netData?.txTotal ?? 0,
+      iface: netData?.iface ?? 'unknown',
     },
     loadAvg: {
       '1m': loadAvg[0],
