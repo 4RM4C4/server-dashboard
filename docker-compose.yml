@@ -1,0 +1,26 @@
+services:
+  app:
+    build: .
+    ports:
+      - "${HOST_PORT:-3000}:3000"
+    environment:
+      PORT: "3000"
+      NODE_ENV: production
+      JWT_SECRET: ${JWT_SECRET}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME:-dashboard}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH}
+      MONITORED_SERVICES: ${MONITORED_SERVICES:-[]}
+      TRAEFIK_API_URL: ${TRAEFIK_API_URL:-http://coolify-proxy:8080}
+      FRONTEND_URL: ${FRONTEND_URL:-*}
+      COLLECT_INTERVAL_SECONDS: ${COLLECT_INTERVAL_SECONDS:-60}
+      RETENTION_DAYS: ${RETENTION_DAYS:-7}
+    volumes:
+      - /:/hostfs:ro
+      - /sys:/sys:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
