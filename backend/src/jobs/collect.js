@@ -6,7 +6,8 @@ import { getServiceRequestMetrics, getEntrypointTrafficMetrics } from '../collec
 import { getServices } from '../db/services.js';
 import pool from '../db/connection.js';
 
-const num = (v) => (Number.isFinite(v) ? v : null);
+const num = (v) => (Number.isFinite(v) ? v : 0);       // NOT NULL columns
+const nullable = (v) => (Number.isFinite(v) ? v : null); // nullable columns
 
 async function collectAll() {
   const services = await getServices().catch(() => []);
@@ -28,14 +29,14 @@ async function collectAll() {
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           num(s.cpu.percent),
-          num(s.temperature),
+          nullable(s.temperature),
           num(s.memory.used),
           num(s.memory.total),
           num(s.disk.used),
           num(s.disk.total),
           num(s.network.rxTotal),
           num(s.network.txTotal),
-          num(s.loadAvg['1m']),
+          nullable(s.loadAvg['1m']),
         ]
       );
     }
