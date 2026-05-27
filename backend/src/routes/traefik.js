@@ -41,15 +41,11 @@ router.get('/requests', async (req, res) => {
     ]);
 
     res.json(
-      rows.map((r) => {
-        const norm = r.service.replace(/@\w+$/, '');
-        const domain = Object.entries(containerDomains).find(([name]) => norm.includes(name))?.[1] ?? null;
-        return {
-          service: r.service,
-          domain,
-          rpm: Number(r.seconds) > 0 ? Math.round((Number(r.delta) / Number(r.seconds)) * 60) : 0,
-        };
-      })
+      rows.map((r) => ({
+        service: r.service,
+        domain: containerDomains[r.service.replace(/@\w+$/, '')] ?? null,
+        rpm: Number(r.seconds) > 0 ? Math.round((Number(r.delta) / Number(r.seconds)) * 60) : 0,
+      }))
     );
   } catch (err) {
     res.status(500).json({ error: err.message });
