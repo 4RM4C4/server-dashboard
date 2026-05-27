@@ -83,6 +83,35 @@ export async function initDb() {
       )
     `);
 
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS monitored_services (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        url VARCHAR(500) NOT NULL,
+        domain VARCHAR(255) NOT NULL,
+        internal_url VARCHAR(500) NULL,
+        enabled TINYINT(1) NOT NULL DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Seed from MONITORED_SERVICES env var if table is empty
+    const [[{ cnt }]] = await conn.query('SELECT COUNT(*) AS cnt FROM monitored_services');
+    if (cnt === 0 && process.env.MONITORED_SERVICES) {
+      try {
+        const services = JSON.parse(process.env.MONITORED_SERVICES);
+        for (const s of services) {
+          await conn.query(
+            'INSERT INTO monitored_services (name, url, domain, internal_url) VALUES (?, ?, ?, ?)',
+            [s.name, s.url, s.domain, s.internalUrl ?? null]
+          );
+        }
+        console.log(`Seeded ${services.length} monitored services`);
+      } catch {
+        // bad env var format — ignore
+      }
+    }
+
     console.log('Database initialized');
   } finally {
     await conn.end();

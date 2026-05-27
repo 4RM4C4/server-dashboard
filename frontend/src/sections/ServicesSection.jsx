@@ -26,11 +26,21 @@ export default function ServicesSection({ health, ssl }) {
               </tr>
             ) : (
               health.map((s) => {
-                const domain = s.url?.replace('https://', '').replace('http://', '').split('/')[0];
-                const cert = sslMap[domain];
+                const cert = sslMap[s.domain] ?? sslMap[s.url?.replace('https://', '').split('/')[0]];
                 return (
                   <tr key={s.name}>
-                    <td style={{ fontWeight: 500 }}>{s.name}</td>
+                    <td style={{ fontWeight: 500 }}>
+                      <a
+                        href={s.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: 'var(--text)', textDecoration: 'none' }}
+                        onMouseEnter={(e) => e.target.style.color = 'var(--accent)'}
+                        onMouseLeave={(e) => e.target.style.color = 'var(--text)'}
+                      >
+                        {s.domain ?? s.name}
+                      </a>
+                    </td>
                     <td><StatusBadge healthy={s.healthy} /></td>
                     <td style={{ color: s.healthy ? latencyColor(s.latency) : 'var(--text-muted)' }}>
                       {s.healthy ? `${s.latency}ms` : '—'}

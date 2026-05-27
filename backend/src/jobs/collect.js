@@ -3,16 +3,17 @@ import { getSystemMetrics } from '../collectors/system.js';
 import { getContainers } from '../collectors/docker.js';
 import { checkAllHealth } from '../collectors/health.js';
 import { getServiceRequestMetrics, getEntrypointTrafficMetrics } from '../collectors/prometheus.js';
+import { getServices } from '../db/services.js';
 import pool from '../db/connection.js';
-import config from '../config.js';
 
 const num = (v) => (Number.isFinite(v) ? v : null);
 
 async function collectAll() {
+  const services = await getServices().catch(() => []);
   const [system, containers, health, traefikServices, traefikTraffic] = await Promise.allSettled([
     getSystemMetrics(),
     getContainers(),
-    checkAllHealth(config.services),
+    checkAllHealth(services),
     getServiceRequestMetrics(),
     getEntrypointTrafficMetrics(),
   ]);

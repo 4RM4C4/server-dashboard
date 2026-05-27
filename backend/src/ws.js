@@ -4,6 +4,7 @@ import { getSystemMetrics } from './collectors/system.js';
 import { getContainers } from './collectors/docker.js';
 import { checkAllHealth } from './collectors/health.js';
 import { streamLogs } from './collectors/docker.js';
+import { getServices } from './db/services.js';
 import config from './config.js';
 
 function verifyToken(token) {
@@ -30,16 +31,17 @@ export function setupWebSocket(server) {
     };
 
     async function pushPublic() {
-      const [system, health] = await Promise.allSettled([
+      const [system, services] = await Promise.allSettled([
         getSystemMetrics(),
-        checkAllHealth(config.services),
+        getServices(),
       ]);
       if (system.status === 'fulfilled') {
         send('system', system.value);
       }
-      if (health.status === 'fulfilled') {
-        send('health', health.value.map(({ name, healthy, latency, statusCode }) => ({
-          name, healthy, latency, statusCode,
+      if (services.status === 'fulfilled') {
+        const health = await checkAllHealth(services.value).catch(() => []);
+        send('health', health.map(({ name, url, domain, healthy, latency, statusCode }) => ({
+          name, url, domain, healthy, latency, statusCode,
         })));
       }
     }

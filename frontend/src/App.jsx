@@ -6,6 +6,7 @@ import SystemSection from './sections/SystemSection';
 import ContainersSection from './sections/ContainersSection';
 import TrafficSection from './sections/TrafficSection';
 import LogsSection from './sections/LogsSection';
+import ServicesConfigSection from './sections/ServicesConfigSection';
 import { useWebSocket } from './hooks/useWebSocket';
 import { api } from './api/client';
 import './App.css';
@@ -67,6 +68,7 @@ export default function App() {
           <>
             <ContainersSection containers={containers} />
             <LogsSection containers={containers} send={send} />
+            <ServicesConfigSection token={token} />
           </>
         ) : (
           <div className="guest-hint">
