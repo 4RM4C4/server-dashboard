@@ -34,7 +34,15 @@ export default function TrafficSection({ token }) {
     return () => clearInterval(interval);
   }, [token]);
 
-  const https = current.find((e) => e.entrypoint === 'https') ?? {};
+  // Sum all entrypoints — name varies by Traefik config (https, websecure, etc.)
+  const totals = current.reduce(
+    (acc, e) => ({
+      rpm: acc.rpm + (e.rpm ?? 0),
+      rxBytesPerSec: acc.rxBytesPerSec + (e.rxBytesPerSec ?? 0),
+      txBytesPerSec: acc.txBytesPerSec + (e.txBytesPerSec ?? 0),
+    }),
+    { rpm: 0, rxBytesPerSec: 0, txBytesPerSec: 0 }
+  );
   const totalRpm = services.reduce((s, r) => s + r.rpm, 0);
   const sortedServices = [...services].sort((a, b) => b.rpm - a.rpm);
 
@@ -44,19 +52,19 @@ export default function TrafficSection({ token }) {
       <div className="grid-3" style={{ marginBottom: '1rem' }}>
         <MetricCard
           label="Requests / min"
-          value={https.rpm ?? 0}
+          value={totals.rpm}
           unit=" rpm"
           color="var(--purple)"
         />
         <MetricCard
           label="Bandwidth ↓ in"
-          value={formatBytes(https.rxBytesPerSec ?? 0)}
+          value={formatBytes(totals.rxBytesPerSec)}
           unit="/s"
           color="var(--green)"
         />
         <MetricCard
           label="Bandwidth ↑ out"
-          value={formatBytes(https.txBytesPerSec ?? 0)}
+          value={formatBytes(totals.txBytesPerSec)}
           unit="/s"
           color="var(--yellow)"
         />
