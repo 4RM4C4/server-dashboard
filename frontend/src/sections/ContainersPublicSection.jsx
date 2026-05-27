@@ -29,13 +29,28 @@ export default function ContainersPublicSection({ containers }) {
             {containers.map((c, i) => {
               const memPct = c.memLimit > 0 ? (c.memUsed / c.memLimit) * 100 : 0;
               const isRunning = c.status === 'running';
+              const displayName = c.urls?.length ? c.urls[0] : c.name;
+              const isUrl = !!c.urls?.length;
               return (
                 <tr key={i} style={{ opacity: isRunning ? 1 : 0.45 }}>
-                  <td style={{ fontWeight: 500 }}>{c.name}</td>
+                  <td style={{ fontWeight: 500 }}>
+                    {isUrl ? (
+                      <a
+                        href={`https://${displayName}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: 'var(--text)', textDecoration: 'none' }}
+                        onMouseEnter={(e) => e.target.style.color = 'var(--accent)'}
+                        onMouseLeave={(e) => e.target.style.color = 'var(--text)'}
+                      >
+                        {displayName}
+                      </a>
+                    ) : displayName}
+                  </td>
                   <td>
-                    {c.urls?.length ? (
+                    {c.urls?.length > 1 ? (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                        {c.urls.map((url) => (
+                        {c.urls.slice(1).map((url) => (
                           <a
                             key={url}
                             href={`https://${url}`}
@@ -50,7 +65,7 @@ export default function ContainersPublicSection({ containers }) {
                         ))}
                       </div>
                     ) : (
-                      <span style={{ color: 'var(--text-dim)', fontSize: '0.75rem' }}>internal</span>
+                      <span style={{ color: 'var(--text-dim)', fontSize: '0.75rem' }}>{isUrl ? '' : 'internal'}</span>
                     )}
                   </td>
                   <td><StatusBadge healthy={isRunning} size="sm" /></td>

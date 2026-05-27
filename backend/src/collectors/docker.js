@@ -36,9 +36,10 @@ function getContainerStats(container) {
 }
 
 function extractUrls(labels) {
-  return Object.entries(labels ?? {})
+  const urls = Object.entries(labels ?? {})
     .filter(([k]) => /^traefik\.http\.routers\..+\.rule$/.test(k))
     .flatMap(([, v]) => [...v.matchAll(/Host\(`([^`]+)`\)/g)].map(m => m[1]));
+  return [...new Set(urls)];
 }
 
 export async function getContainers() {
