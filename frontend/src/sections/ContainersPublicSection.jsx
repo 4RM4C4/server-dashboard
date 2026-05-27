@@ -19,7 +19,6 @@ export default function ContainersPublicSection({ containers }) {
           <thead>
             <tr>
               <th>service</th>
-              <th>url</th>
               <th>status</th>
               <th>cpu</th>
               <th>memory</th>
@@ -45,27 +44,11 @@ export default function ContainersPublicSection({ containers }) {
                       >
                         {displayName}
                       </a>
-                    ) : displayName}
-                  </td>
-                  <td>
-                    {c.urls?.length > 1 ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                        {c.urls.slice(1).map((url) => (
-                          <a
-                            key={url}
-                            href={`https://${url}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.78rem' }}
-                            onMouseEnter={(e) => e.target.style.color = 'var(--accent)'}
-                            onMouseLeave={(e) => e.target.style.color = 'var(--text-muted)'}
-                          >
-                            {url}
-                          </a>
-                        ))}
-                      </div>
                     ) : (
-                      <span style={{ color: 'var(--text-dim)', fontSize: '0.75rem' }}>{isUrl ? '' : 'internal'}</span>
+                      <span>
+                        {displayName}
+                        <span style={{ color: 'var(--text-dim)', fontSize: '0.7rem', marginLeft: '0.4rem', fontWeight: 400 }}>internal</span>
+                      </span>
                     )}
                   </td>
                   <td><StatusBadge healthy={isRunning} size="sm" /></td>

@@ -66,7 +66,6 @@ export default function App() {
         <ServicesSection health={health} ssl={ssl} />
         <SystemSection system={system} token={token} />
         <TrafficSection token={token} />
-        <ContainersPublicSection containers={containersPublic} />
 
         {token ? (
           <>
@@ -75,16 +74,19 @@ export default function App() {
             <ServicesConfigSection token={token} />
           </>
         ) : (
-          <div className="guest-hint">
-            <span className="guest-hint-prompt">&gt;</span>
-            <span>
-              login as{' '}
-              <button className="guest-hint-link" onClick={() => setShowLogin(true)}>
-                admin
-              </button>{' '}
-              to view live logs and full container details
-            </span>
-          </div>
+          <>
+            <ContainersPublicSection containers={containersPublic} />
+            <div className="guest-hint">
+              <span className="guest-hint-prompt">&gt;</span>
+              <span>
+                login as{' '}
+                <button className="guest-hint-link" onClick={() => setShowLogin(true)}>
+                  admin
+                </button>{' '}
+                to view live logs and full container details
+              </span>
+            </div>
+          </>
         )}
       </main>
 
