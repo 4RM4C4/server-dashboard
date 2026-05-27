@@ -14,7 +14,7 @@ const config = {
   },
   admin: {
     username: process.env.ADMIN_USERNAME || 'admin',
-    passwordHash: process.env.ADMIN_PASSWORD_HASH || '',
+    password: process.env.ADMIN_PASSWORD || '',
   },
   services: JSON.parse(process.env.MONITORED_SERVICES || '[]'),
   traefikApiUrl: process.env.TRAEFIK_API_URL || 'http://coolify-proxy:8080',

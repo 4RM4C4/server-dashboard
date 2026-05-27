@@ -1,4 +1,5 @@
 import mysql from 'mysql2/promise';
+import bcrypt from 'bcryptjs';
 import config from '../config.js';
 
 export async function initDb() {
@@ -12,6 +13,15 @@ export async function initDb() {
   try {
     await conn.query(`CREATE DATABASE IF NOT EXISTS \`${config.db.database}\``);
     await conn.query(`USE \`${config.db.database}\``);
+
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS admin_users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(100) NOT NULL UNIQUE,
+        password_hash VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
 
     await conn.query(`
       CREATE TABLE IF NOT EXISTS system_metrics (
@@ -95,9 +105,20 @@ export async function initDb() {
       )
     `);
 
-    // Seed from MONITORED_SERVICES env var if table is empty
-    const [[{ cnt }]] = await conn.query('SELECT COUNT(*) AS cnt FROM monitored_services');
-    if (cnt === 0 && process.env.MONITORED_SERVICES) {
+    // Seed admin user from plain-text env var (hashed here, never stored as-is)
+    const [[{ adminCnt }]] = await conn.query('SELECT COUNT(*) AS adminCnt FROM admin_users');
+    if (adminCnt === 0 && process.env.ADMIN_USERNAME && process.env.ADMIN_PASSWORD) {
+      const hash = await bcrypt.hash(process.env.ADMIN_PASSWORD, 10);
+      await conn.query(
+        'INSERT INTO admin_users (username, password_hash) VALUES (?, ?)',
+        [process.env.ADMIN_USERNAME, hash]
+      );
+      console.log('Admin user created');
+    }
+
+    // Seed monitored services from env var if table is empty
+    const [[{ svcCnt }]] = await conn.query('SELECT COUNT(*) AS svcCnt FROM monitored_services');
+    if (svcCnt === 0 && process.env.MONITORED_SERVICES) {
       try {
         const services = JSON.parse(process.env.MONITORED_SERVICES);
         for (const s of services) {

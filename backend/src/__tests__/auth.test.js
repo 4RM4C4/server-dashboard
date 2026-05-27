@@ -1,12 +1,15 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import request from 'supertest';
+import bcrypt from 'bcryptjs';
 
-// Stub DB pool before importing app (prevents real DB connection)
+const HASH = await bcrypt.hash('dashboard123', 10);
+
+const mockQuery = vi.fn();
+
 vi.mock('../db/connection.js', () => ({
-  default: { query: vi.fn(), end: vi.fn() },
+  default: { query: mockQuery, end: vi.fn() },
 }));
 
-// Stub collectors so they don't call real OS/Docker APIs
 vi.mock('../collectors/system.js', () => ({
   getSystemMetrics: vi.fn().mockResolvedValue({ uptime: 100, cpu: {}, memory: {}, disk: {}, network: {}, loadAvg: {} }),
 }));
@@ -15,11 +18,11 @@ vi.mock('../collectors/health.js', () => ({
   checkAllHealth: vi.fn().mockResolvedValue([]),
 }));
 
-const HASH_FOR_password123 = '$2a$10$VDBa0GTKndISrgo4hHAtIOPOMSoRLZIiD46QXC.kJKyOAi1/sGN16';
+vi.mock('../db/services.js', () => ({
+  getServices: vi.fn().mockResolvedValue([]),
+}));
 
 beforeAll(() => {
-  process.env.ADMIN_USERNAME = 'admin';
-  process.env.ADMIN_PASSWORD_HASH = HASH_FOR_password123;
   process.env.JWT_SECRET = 'test-secret';
 });
 
@@ -41,7 +44,8 @@ describe('POST /api/auth/login', () => {
     expect(res.status).toBe(400);
   });
 
-  it('returns 401 for wrong username', async () => {
+  it('returns 401 for unknown username', async () => {
+    mockQuery.mockResolvedValueOnce([[]]); // no user found
     const res = await request(app)
       .post('/api/auth/login')
       .send({ username: 'hacker', password: 'password123' });
@@ -50,6 +54,7 @@ describe('POST /api/auth/login', () => {
   });
 
   it('returns 401 for wrong password', async () => {
+    mockQuery.mockResolvedValueOnce([[{ password_hash: HASH }]]);
     const res = await request(app)
       .post('/api/auth/login')
       .send({ username: 'admin', password: 'wrongpassword' });
@@ -57,6 +62,7 @@ describe('POST /api/auth/login', () => {
   });
 
   it('returns 200 with JWT token on correct credentials', async () => {
+    mockQuery.mockResolvedValueOnce([[{ password_hash: HASH }]]);
     const res = await request(app)
       .post('/api/auth/login')
       .send({ username: 'admin', password: 'dashboard123' });
