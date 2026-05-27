@@ -35,6 +35,12 @@ function getContainerStats(container) {
   });
 }
 
+function extractUrls(labels) {
+  return Object.entries(labels ?? {})
+    .filter(([k]) => /^traefik\.http\.routers\..+\.rule$/.test(k))
+    .flatMap(([, v]) => [...v.matchAll(/Host\(`([^`]+)`\)/g)].map(m => m[1]));
+}
+
 export async function getContainers() {
   try {
     const list = await docker.listContainers({ all: true });
@@ -55,6 +61,7 @@ export async function getContainers() {
           memLimit: stats?.memLimit ?? 0,
           project: labels['com.docker.compose.project'] ?? labels['coolify.name'] ?? null,
           service: labels['com.docker.compose.service'] ?? null,
+          urls: extractUrls(labels),
         };
       })
     );

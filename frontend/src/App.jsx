@@ -7,6 +7,7 @@ import ContainersSection from './sections/ContainersSection';
 import TrafficSection from './sections/TrafficSection';
 import LogsSection from './sections/LogsSection';
 import ServicesConfigSection from './sections/ServicesConfigSection';
+import ContainersPublicSection from './sections/ContainersPublicSection';
 import { useWebSocket } from './hooks/useWebSocket';
 import { api } from './api/client';
 import './App.css';
@@ -19,6 +20,7 @@ export default function App() {
   const [ssl, setSsl] = useState([]);
   const [system, setSystem] = useState(null);
   const [containers, setContainers] = useState([]);
+  const [containersPublic, setContainersPublic] = useState([]);
 
   const { connected, send } = useWebSocket({
     token,
@@ -28,6 +30,7 @@ export default function App() {
       if (msg.type === 'health') setHealth(msg.data);
       if (msg.type === 'system') setSystem(msg.data);
       if (msg.type === 'containers') setContainers(msg.data);
+      if (msg.type === 'containers_public') setContainersPublic(msg.data);
     }, []),
   });
 
@@ -63,6 +66,7 @@ export default function App() {
         <ServicesSection health={health} ssl={ssl} />
         <SystemSection system={system} token={token} />
         <TrafficSection token={token} />
+        <ContainersPublicSection containers={containersPublic} />
 
         {token ? (
           <>
@@ -78,7 +82,7 @@ export default function App() {
               <button className="guest-hint-link" onClick={() => setShowLogin(true)}>
                 admin
               </button>{' '}
-              to view container details and live logs
+              to view live logs and full container details
             </span>
           </div>
         )}

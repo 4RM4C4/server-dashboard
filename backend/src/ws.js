@@ -31,9 +31,10 @@ export function setupWebSocket(server) {
     };
 
     async function pushPublic() {
-      const [system, services] = await Promise.allSettled([
+      const [system, services, containers] = await Promise.allSettled([
         getSystemMetrics(),
         getServices(),
+        getContainers(),
       ]);
       if (system.status === 'fulfilled') {
         send('system', system.value);
@@ -42,6 +43,16 @@ export function setupWebSocket(server) {
         const health = await checkAllHealth(services.value).catch(() => []);
         send('health', health.map(({ name, url, domain, healthy, latency, statusCode }) => ({
           name, url, domain, healthy, latency, statusCode,
+        })));
+      }
+      if (containers.status === 'fulfilled') {
+        send('containers_public', containers.value.map(({ name, service, status, cpu, memUsed, memLimit, urls }) => ({
+          name: service ?? name,
+          status,
+          cpu,
+          memUsed,
+          memLimit,
+          urls,
         })));
       }
     }
