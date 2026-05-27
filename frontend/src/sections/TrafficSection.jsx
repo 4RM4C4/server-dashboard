@@ -40,8 +40,8 @@ export default function TrafficSection({ token }) {
     }),
     { rpm: 0, rxBytesPerSec: 0, txBytesPerSec: 0 }
   );
-  const totalRpm = services.reduce((s, r) => s + r.rpm, 0);
-  const sortedServices = [...services].sort((a, b) => b.rpm - a.rpm);
+  const totalRequests = services.reduce((s, r) => s + r.total, 0);
+  const sortedServices = [...services].sort((a, b) => b.total - a.total);
 
   return (
     <section className="section fade-in">
@@ -80,11 +80,11 @@ export default function TrafficSection({ token }) {
         {sortedServices.length > 0 && (
           <div className="card">
             <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              by service
+              by service · 24h
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
               {sortedServices.map((s) => {
-                const pct = totalRpm > 0 ? (s.rpm / totalRpm) * 100 : 0;
+                const pct = totalRequests > 0 ? (s.total / totalRequests) * 100 : 0;
                 return (
                   <div key={s.domain}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.2rem', fontSize: '0.78rem' }}>
@@ -92,7 +92,7 @@ export default function TrafficSection({ token }) {
                         {s.domain ?? '—'}
                       </span>
                       <span style={{ color: 'var(--purple)', flexShrink: 0 }}>
-                        {s.rpm > 0 ? `${s.rpm} rpm` : <span style={{ color: 'var(--text-dim)' }}>—</span>}
+                        {s.total > 0 ? s.total.toLocaleString() : <span style={{ color: 'var(--text-dim)' }}>—</span>}
                       </span>
                     </div>
                     <div style={{ height: '3px', background: 'var(--border)', borderRadius: '2px' }}>

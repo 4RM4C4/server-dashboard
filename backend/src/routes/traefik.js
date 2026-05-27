@@ -18,24 +18,24 @@ router.get('/services', requireAuth, async (req, res) => {
   res.json((await getTraefikServices()) ?? []);
 });
 
-// Current RPM per service — domain resolved by matching container name (UUID) in service label
+// Requests per service over the last 24h (latest snapshot minus oldest in window)
 router.get('/requests', async (req, res) => {
   try {
     const [rows, containerDomains] = await Promise.all([
       pool.query(`
         SELECT
           a.service,
-          GREATEST(0, a.requests_total - COALESCE(b.requests_total, 0)) AS delta,
-          TIMESTAMPDIFF(SECOND, COALESCE(b.recorded_at, a.recorded_at), a.recorded_at) AS seconds
+          GREATEST(0, a.requests_total - COALESCE(b.requests_total, 0)) AS total_24h
         FROM traefik_snapshots a
         LEFT JOIN traefik_snapshots b
           ON b.service = a.service
           AND b.id = (
-            SELECT MAX(s.id) FROM traefik_snapshots s
-            WHERE s.service = a.service AND s.id < a.id
+            SELECT MIN(s.id) FROM traefik_snapshots s
+            WHERE s.service = a.service
+              AND s.recorded_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
           )
         WHERE a.id IN (SELECT MAX(id) FROM traefik_snapshots GROUP BY service)
-        ORDER BY delta DESC
+        ORDER BY total_24h DESC
       `).then(([r]) => r),
       getContainerDomainMap(),
     ]);
@@ -43,7 +43,7 @@ router.get('/requests', async (req, res) => {
     res.json(
       rows.map((r) => ({
         domain: containerDomains[r.service.replace(/@\w+$/, '')] ?? null,
-        rpm: Number(r.seconds) > 0 ? Math.round((Number(r.delta) / Number(r.seconds)) * 60) : 0,
+        total: Number(r.total_24h),
       }))
     );
   } catch (err) {
