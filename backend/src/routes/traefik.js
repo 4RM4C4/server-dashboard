@@ -18,7 +18,7 @@ router.get('/services', requireAuth, async (req, res) => {
 });
 
 // Current RPM per service (delta between last two snapshots)
-router.get('/requests', requireAuth, async (req, res) => {
+router.get('/requests', async (req, res) => {
   try {
     const [rows] = await pool.query(`
       SELECT

@@ -28,7 +28,7 @@ export default function SystemSection({ system, token }) {
   return (
     <section className="section fade-in">
       <div className="section-title">system</div>
-      <div className="grid-4" style={{ marginBottom: '1rem' }}>
+      <div className="grid-5" style={{ marginBottom: '1rem' }}>
         <MetricCard
           label="CPU"
           value={formatPercent(cpuPct)}
@@ -59,7 +59,13 @@ export default function SystemSection({ system, token }) {
             : system?.temperature > 60 ? 'var(--yellow)'
             : 'var(--blue)'
           }
-          sub={`net ↓${formatBytes(system?.network?.rxSec ?? 0)}/s ↑${formatBytes(system?.network?.txSec ?? 0)}/s`}
+          sub={system?.network?.iface ?? ''}
+        />
+        <MetricCard
+          label="Network"
+          value={`↓ ${formatBytes(system?.network?.rxSec ?? 0)}/s`}
+          color="var(--green)"
+          sub={`↑ ${formatBytes(system?.network?.txSec ?? 0)}/s`}
         />
       </div>
 
