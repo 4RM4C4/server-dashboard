@@ -6,19 +6,24 @@ async function checkHealth(service) {
   // as the services it monitors.
   const targetUrl = service.internalUrl ?? service.url;
   const headers = service.internalUrl ? { Host: new URL(service.url).hostname } : {};
+  // When using internalUrl, don't follow redirects — HTTP→HTTPS redirect from
+  // Traefik would send fetch back to the public URL and hit hairpin NAT again.
+  // An opaque redirect (status 0) means the proxy received the request → healthy.
+  const redirect = service.internalUrl ? 'manual' : 'follow';
 
   try {
     const res = await fetch(targetUrl, {
       signal: AbortSignal.timeout(8000),
-      redirect: 'follow',
+      redirect,
       headers,
     });
+    const statusCode = res.status;
     return {
       name: service.name,
       url: service.url,
-      statusCode: res.status,
+      statusCode,
       latency: Date.now() - start,
-      healthy: res.status < 500,
+      healthy: statusCode === 0 || statusCode < 500,
     };
   } catch (err) {
     return {
