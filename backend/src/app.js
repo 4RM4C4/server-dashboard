@@ -27,7 +27,7 @@ export function createApp() {
   app.use('/api/traefik', traefikRoutes);
 
   // Serve built frontend in production (dist/ is copied into the image by the root Dockerfile)
-  const distPath = join(__dirname, '..', '..', 'dist');
+  const distPath = join(__dirname, '..', 'dist');
   if (existsSync(distPath)) {
     app.use(express.static(distPath));
     app.get(/^(?!\/api|\/health).*/, (_, res) =>
