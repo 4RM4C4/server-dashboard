@@ -7,13 +7,6 @@ const IS_WINDOWS = process.platform === 'win32';
 const HAS_HOSTFS = existsSync('/hostfs');
 const HAS_HOSTPROC_NET = existsSync('/hostproc/net');
 
-console.log(`[system] network source: ${HAS_HOSTPROC_NET ? '/hostproc/net (host)' : 'systeminformation (container fallback)'}`);
-if (HAS_HOSTPROC_NET) {
-  getHostNetStats().then((ifaces) => {
-    console.log('[system] net/dev interfaces:', ifaces.map((i) => `${i.iface} rx=${i.rx_bytes} tx=${i.tx_bytes}`).join(' | '));
-  }).catch((e) => console.error('[system] net/dev read error:', e.message));
-}
-
 // Parsed state for rate calculation
 let _prevNet = null;
 let _prevNetTime = null;

@@ -47,18 +47,10 @@ export async function getServiceRequestMetrics() {
   }
 }
 
-let _metricsLogged = false;
-
 // Returns per-entrypoint request counts and bytes (for traffic tracking)
 export async function getEntrypointTrafficMetrics() {
   try {
     const text = await fetchMetrics();
-    if (!_metricsLogged) {
-      _metricsLogged = true;
-      console.log('[traefik] req_bytes metric available:', text.includes('traefik_entrypoint_requests_bytes_total'));
-      console.log('[traefik] resp_bytes metric available:', text.includes('traefik_entrypoint_responses_bytes_total'));
-      console.log('[traefik] entrypoint metrics:', [...text.matchAll(/^traefik_entrypoint_\w+(?=\{)/gm)].map(m => m[0]).filter((v, i, a) => a.indexOf(v) === i).join(', '));
-    }
 
     const reqCounts = sumMetric(text, 'traefik_entrypoint_requests_total');
     const reqBytes = sumMetric(text, 'traefik_entrypoint_requests_bytes_total');

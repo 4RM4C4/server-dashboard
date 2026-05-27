@@ -73,7 +73,6 @@ async function collectAll() {
     }
 
     if (traefikTraffic.status === 'fulfilled' && traefikTraffic.value) {
-      console.log('[collect] traefik_traffic:', JSON.stringify(traefikTraffic.value));
       for (const { entrypoint, requests_total, req_bytes, resp_bytes } of traefikTraffic.value) {
         await pool.query(
           'INSERT INTO traefik_traffic (entrypoint, requests_total, req_bytes, resp_bytes) VALUES (?, ?, ?, ?)',

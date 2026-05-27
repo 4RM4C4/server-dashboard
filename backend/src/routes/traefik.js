@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { getTraefikOverview, getTraefikRouters, getTraefikServices } from '../collectors/traefik.js';
+import { getContainerDomainMap } from '../collectors/docker.js';
 import pool from '../db/connection.js';
 
 const router = Router();
@@ -17,10 +18,10 @@ router.get('/services', requireAuth, async (req, res) => {
   res.json((await getTraefikServices()) ?? []);
 });
 
-// Current RPM per service — enriched with domain from Traefik router rules
+// Current RPM per service — domain resolved by matching container name (UUID) in service label
 router.get('/requests', async (req, res) => {
   try {
-    const [rows, routers] = await Promise.all([
+    const [rows, containerDomains] = await Promise.all([
       pool.query(`
         SELECT
           a.service,
@@ -36,21 +37,19 @@ router.get('/requests', async (req, res) => {
         WHERE a.id IN (SELECT MAX(id) FROM traefik_snapshots GROUP BY service)
         ORDER BY delta DESC
       `).then(([r]) => r),
-      getTraefikRouters().catch(() => []),
+      getContainerDomainMap(),
     ]);
 
-    const domainMap = {};
-    for (const r of routers ?? []) {
-      const match = r.rule?.match(/Host\(`([^`]+)`\)/);
-      if (match && r.service) domainMap[r.service] = match[1];
-    }
-
     res.json(
-      rows.map((r) => ({
-        service: r.service,
-        domain: domainMap[r.service] ?? null,
-        rpm: r.seconds > 0 ? Math.round((r.delta / r.seconds) * 60) : 0,
-      }))
+      rows.map((r) => {
+        const norm = r.service.replace(/@\w+$/, '');
+        const domain = Object.entries(containerDomains).find(([name]) => norm.includes(name))?.[1] ?? null;
+        return {
+          service: r.service,
+          domain,
+          rpm: Number(r.seconds) > 0 ? Math.round((Number(r.delta) / Number(r.seconds)) * 60) : 0,
+        };
+      })
     );
   } catch (err) {
     res.status(500).json({ error: err.message });

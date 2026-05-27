@@ -42,6 +42,24 @@ function extractUrls(labels) {
   return [...new Set(urls)];
 }
 
+// Returns { containerName: firstUrl } for running containers with Traefik rules.
+// The container name (UUID) is a substring of the Prometheus service label
+// (e.g. "https-0-{uuid}@docker"), so callers match with serviceNorm.includes(name).
+export async function getContainerDomainMap() {
+  try {
+    const list = await docker.listContainers({ all: false });
+    const map = {};
+    for (const info of list) {
+      const name = info.Names[0]?.replace('/', '') ?? '';
+      const urls = extractUrls(info.Labels ?? {});
+      if (name && urls.length > 0) map[name] = urls[0];
+    }
+    return map;
+  } catch {
+    return {};
+  }
+}
+
 export async function getContainers() {
   try {
     const list = await docker.listContainers({ all: true });
