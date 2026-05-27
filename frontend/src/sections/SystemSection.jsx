@@ -61,12 +61,17 @@ export default function SystemSection({ system, token }) {
           }
           sub={system?.network?.iface ?? ''}
         />
-        <MetricCard
-          label="Network"
-          value={`↓ ${formatBytes(system?.network?.rxSec ?? 0)}/s`}
-          color="var(--green)"
-          sub={`↑ ${formatBytes(system?.network?.txSec ?? 0)}/s`}
-        />
+        <div className="metric-card">
+          <div className="metric-label">Network</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.1rem' }}>
+            <div style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--green)' }}>
+              ↓ {formatBytes(system?.network?.rxSec ?? 0)}/s
+            </div>
+            <div style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--yellow)' }}>
+              ↑ {formatBytes(system?.network?.txSec ?? 0)}/s
+            </div>
+          </div>
+        </div>
       </div>
 
       {history.length > 1 && (

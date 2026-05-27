@@ -36,7 +36,7 @@ export default function TrafficSection({ token }) {
 
   const https = current.find((e) => e.entrypoint === 'https') ?? {};
   const totalRpm = services.reduce((s, r) => s + r.rpm, 0);
-  const activeServices = services.filter((s) => s.rpm > 0).sort((a, b) => b.rpm - a.rpm);
+  const sortedServices = [...services].sort((a, b) => b.rpm - a.rpm);
 
   return (
     <section className="section fade-in">
@@ -62,7 +62,7 @@ export default function TrafficSection({ token }) {
         />
       </div>
 
-      <div className={activeServices.length > 0 ? 'grid-2' : ''} style={activeServices.length > 0 ? { gridTemplateColumns: '2fr 1fr' } : {}}>
+      <div className={sortedServices.length > 0 ? 'grid-2' : ''} style={sortedServices.length > 0 ? { gridTemplateColumns: '2fr 1fr' } : {}}>
         {history.length > 1 && (
           <div className="card">
             <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
@@ -72,13 +72,13 @@ export default function TrafficSection({ token }) {
           </div>
         )}
 
-        {activeServices.length > 0 && (
+        {sortedServices.length > 0 && (
           <div className="card">
             <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
               by service
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-              {activeServices.map((s) => {
+              {sortedServices.map((s) => {
                 const pct = totalRpm > 0 ? (s.rpm / totalRpm) * 100 : 0;
                 return (
                   <div key={s.service}>
@@ -86,7 +86,9 @@ export default function TrafficSection({ token }) {
                       <span style={{ color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '70%' }}>
                         {cleanServiceName(s.service)}
                       </span>
-                      <span style={{ color: 'var(--purple)', flexShrink: 0 }}>{s.rpm} rpm</span>
+                      <span style={{ color: 'var(--purple)', flexShrink: 0 }}>
+                        {s.rpm > 0 ? `${s.rpm} rpm` : <span style={{ color: 'var(--text-dim)' }}>—</span>}
+                      </span>
                     </div>
                     <div style={{ height: '3px', background: 'var(--border)', borderRadius: '2px' }}>
                       <div style={{ height: '100%', width: `${pct}%`, background: 'var(--purple)', borderRadius: '2px', transition: 'width 0.4s' }} />
