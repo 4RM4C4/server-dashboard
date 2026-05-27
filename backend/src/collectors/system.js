@@ -15,13 +15,18 @@ let _prevNetTime = null;
 
 async function getHostNetStats() {
   const raw = await readFile('/hostproc/net/dev', 'utf8');
-  const lines = raw.trim().split('\n').slice(2); // skip header rows
+  const lines = raw.trim().split('\n').slice(2);
   const ifaces = lines.map((line) => {
-    const parts = line.trim().split(/\s+/);
+    // Format: "  eth0:RXBYTES RXPKTS ..." — colon may be glued to the number when counter > 8 digits
+    const colonIdx = line.indexOf(':');
+    const iface = line.slice(0, colonIdx).trim();
+    const parts = line.slice(colonIdx + 1).trim().split(/\s+/);
+    // Receive: bytes[0] pkts[1] errs[2] drop[3] fifo[4] frame[5] compressed[6] multicast[7]
+    // Transmit: bytes[8] pkts[9] ...
     return {
-      iface: parts[0].replace(':', ''),
-      rx_bytes: parseInt(parts[1], 10),
-      tx_bytes: parseInt(parts[9], 10),
+      iface,
+      rx_bytes: parseInt(parts[0], 10),
+      tx_bytes: parseInt(parts[8], 10),
     };
   });
   return ifaces.filter(
