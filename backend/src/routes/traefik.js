@@ -42,7 +42,6 @@ router.get('/requests', async (req, res) => {
 
     res.json(
       rows.map((r) => ({
-        service: r.service,
         domain: containerDomains[r.service.replace(/@\w+$/, '')] ?? null,
         rpm: Number(r.seconds) > 0 ? Math.round((Number(r.delta) / Number(r.seconds)) * 60) : 0,
       }))

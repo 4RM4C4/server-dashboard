@@ -4,9 +4,6 @@ import MiniChart from '../components/MiniChart';
 import { api } from '../api/client';
 import { formatBytes, formatTime } from '../utils';
 
-function cleanServiceName(name) {
-  return name.replace(/@\w+$/, '').replace(/-service$/, '');
-}
 
 export default function TrafficSection({ token }) {
   const [current, setCurrent] = useState([]);
@@ -89,10 +86,10 @@ export default function TrafficSection({ token }) {
               {sortedServices.map((s) => {
                 const pct = totalRpm > 0 ? (s.rpm / totalRpm) * 100 : 0;
                 return (
-                  <div key={s.service}>
+                  <div key={s.domain}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.2rem', fontSize: '0.78rem' }}>
                       <span style={{ color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '70%' }}>
-                        {s.domain ?? cleanServiceName(s.service)}
+                        {s.domain ?? '—'}
                       </span>
                       <span style={{ color: 'var(--purple)', flexShrink: 0 }}>
                         {s.rpm > 0 ? `${s.rpm} rpm` : <span style={{ color: 'var(--text-dim)' }}>—</span>}
